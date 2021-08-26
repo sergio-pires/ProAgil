@@ -1,19 +1,24 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ProAgil.Domain;
 using ProAgil.Repository;
+using ProAgil.WebAPI.Dtos;
 
 namespace ProAgil.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class EventoController: ControllerBase
+    public class EventoController : ControllerBase
     {
-        
+        private readonly IMapper _mapper;
+
         private readonly IProAgilRepository _repo;
-        public EventoController(IProAgilRepository repo)
+        public EventoController(IProAgilRepository repo, IMapper mapper)
         {
+            _mapper = mapper;
             _repo = repo;
         }
 
@@ -22,15 +27,16 @@ namespace ProAgil.WebAPI.Controllers
         {
             try
             {
-                var results = await _repo. GetAllEventosAsync(true);
-                return Ok(results);                
+                var eventos = await _repo.GetAllEventosAsync(true);
+                var results = _mapper.Map<EventoDto[]>(eventos);
+                return Ok(results);
             }
             catch (System.Exception)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "Base de Dados falhou");
             }
 
-            
+
         }
 
         [HttpGet("{EventoId}")]
@@ -38,8 +44,9 @@ namespace ProAgil.WebAPI.Controllers
         {
             try
             {
-                var results = await _repo.GetEventoAsyncById(EventoId, true);
-                return Ok(results);                
+                var evento = await _repo.GetEventoAsyncById(EventoId, true);
+                var results = _mapper.Map<EventoDto>(evento);
+                return Ok(results);
             }
             catch (System.Exception)
             {
@@ -48,39 +55,42 @@ namespace ProAgil.WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post(Evento model)
+        public async Task<IActionResult> Post(EventoDto model)
         {
             try
             {
-                _repo.Add(model);
+                var evento  = _mapper.Map<Evento>(model);
+                _repo.Add(evento);
 
                 if (await _repo.SaveChangesAsync())
                 {
-                    return Created($"/api/evento/{model.Id}", model);
-                }                
+                    return Created($"/api/evento/{model.Id}", _mapper.Map<Evento>(model));
+                }
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, "Base de Dados falhou");
+                return this.StatusCode(StatusCodes.Status500InternalServerError, $"Base de Dados falhou {ex.InnerException}");
             }
 
             return BadRequest();
         }
 
         [HttpPut("{EventoId}")]
-        public async Task<IActionResult> Put(int EventoId, Evento model)
+        public async Task<IActionResult> Put(int EventoId, EventoDto model)
         {
             try
             {
                 var evento = await _repo.GetEventoAsyncById(EventoId, false);
                 if (evento == null) return NotFound();
 
-                _repo.Update(model);
+                _mapper.Map(model, evento); // Preenche as informaçoes em falta de model com as que existem na base de dados
+
+                _repo.Update(evento);
 
                 if (await _repo.SaveChangesAsync())
                 {
-                    return Created($"/api/evento/{model.Id}", model);
-                }                
+                    return Created($"/api/evento/{model.Id}", _mapper.Map<Evento>(model));
+                }
             }
             catch (System.Exception)
             {
@@ -103,7 +113,7 @@ namespace ProAgil.WebAPI.Controllers
                 if (await _repo.SaveChangesAsync())
                 {
                     return Ok();
-                }                
+                }
             }
             catch (System.Exception)
             {
@@ -118,15 +128,16 @@ namespace ProAgil.WebAPI.Controllers
         {
             try
             {
-                var results = await _repo.GetAllEventosAsyncByTema(tema, true);
-                return Ok(results);                
+                var eventos = await _repo.GetAllEventosAsyncByTema(tema, true);
+                var results = _mapper.Map<EventoDto[]>(eventos);
+                return Ok(results);
             }
             catch (System.Exception)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "Base de Dados falhou");
             }
 
-            
+
         }
     }
 }
