@@ -7,6 +7,8 @@ import { BsLocaleService } from 'ngx-bootstrap/datepicker';
 import { defineLocale } from 'ngx-bootstrap/chronos';
 import { ptBrLocale } from 'ngx-bootstrap/locale';
 import { templateJitUrl } from '@angular/compiler';
+import { ToastrService } from 'ngx-toastr';
+
 defineLocale('pt-pt', ptBrLocale);
 
 @Component({
@@ -21,6 +23,7 @@ export class EventosComponent implements OnInit {
 
   evento!: Evento;
   modoSalvar = 'post';
+  dataEvento= '';
 
   imagemLargura = 50;
   imagemMargem = 2;
@@ -60,8 +63,10 @@ export class EventosComponent implements OnInit {
       () => {
         template.hide();
         this.getEventos();
+        this.toastr.success('Eliminado com sucesso');
       }, error => {
         console.log(error);
+        this.toastr.error('Erro ao tentar eliminar');
       }
     );
   }
@@ -77,7 +82,8 @@ export class EventosComponent implements OnInit {
     private eventoService: EventoService,
     private modalService: BsModalService,
     private fb: FormBuilder,
-    private localeService: BsLocaleService
+    private localeService: BsLocaleService,
+    private toastr: ToastrService
     ) { 
       this.localeService.use('pt-pt');
     }
@@ -106,8 +112,10 @@ export class EventosComponent implements OnInit {
           (novoEvento: Evento) => {
             template.hide();
             this.getEventos();
+            this.toastr.success('Inserido com sucesso');
           }, error => {
             console.log(error);
+            this.toastr.error('Erro ao tentar inserir');
           }
         );
       } else {
@@ -117,8 +125,10 @@ export class EventosComponent implements OnInit {
           () => {
             template.hide();
             this.getEventos();
+            this.toastr.success('Gravado com sucesso');
           }, error => {
             console.log(error);
+            this.toastr.error('Erro ao tentar gravar');
           }
         );
       }
@@ -147,6 +157,7 @@ export class EventosComponent implements OnInit {
         console.log(_eventos);
       }, error => {
         console.log(error);
+        this.toastr.error('Erro ao carregar os eventos!');
       }
     );
   }
