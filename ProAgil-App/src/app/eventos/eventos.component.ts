@@ -18,6 +18,8 @@ defineLocale('pt-pt', ptBrLocale);
 })
 export class EventosComponent implements OnInit {
   
+  titulo = 'Eventos';
+
   eventosFiltrados: Evento[] = [];
   eventos: Evento[] = [];
 
