@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -113,8 +114,28 @@ namespace ProAgil.WebAPI.Controllers
         {
             try
             {
+                //Identificar quais os lotes e eventos que foram enviados, uma vez que apnas esses serão gravados. Os outros serão eliminados
+                var idLotes = new List<int>();
+                var idRedesSociais = new List<int>();
+
+                model.Lotes.ForEach(lote => idLotes.Add(lote.Id));
+                model.RedesSociais.ForEach(redeSocial => idRedesSociais.Add(redeSocial.Id));
+                
                 var evento = await _repo.GetEventoAsyncById(EventoId, false);
                 if (evento == null) return NotFound();
+
+
+                var lotesToDelete = evento.Lotes.Where(
+                    lote => !idLotes.Contains(lote.Id)
+                ).ToArray();
+
+                var redesSociaisToDelete = evento.RedesSociais.Where(
+                    redeSocial => !idRedesSociais.Contains(redeSocial.Id)
+                ).ToArray();
+                
+                //Remover os itens marcados
+                if(lotesToDelete.Length > 0) _repo.DeleteRange(lotesToDelete);
+                if(redesSociaisToDelete.Length > 0) _repo.DeleteRange(redesSociaisToDelete);
 
                 _mapper.Map(model, evento); // Preenche as informaçoes em falta de model com as que existem na base de dados
 
